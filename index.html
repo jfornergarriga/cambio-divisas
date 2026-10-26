@@ -6,11 +6,14 @@
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#11120f">
   <title>Cambio de divisas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap" rel="stylesheet">
   <style>
     :root { color-scheme: dark; --bg:#11120f; --panel:#1c1e19; --line:#ffffff16; --text:#f2f3e9; --muted:#a2a69a; --accent:#e4f568; --error:#ffb5a7; }
     * { box-sizing:border-box; }
     [hidden] { display:none !important; }
-    body { margin:0; min-height:100svh; color:var(--text); background:radial-gradient(ellipse at 90% 0%,#363b242d,transparent 55%),var(--bg); font-family:'Arial Narrow','Aptos Narrow','Roboto Condensed',Arial,sans-serif; }
+    body { margin:0; min-height:100svh; color:var(--text); background:radial-gradient(ellipse at 90% 0%,#363b242d,transparent 55%),var(--bg); font-family:'Plus Jakarta Sans','Aptos',Arial,sans-serif; font-weight:400; line-height:1.5; }
     button,input,select { font:inherit; }
     button,select,input[type=date] { cursor:pointer; }
     button { -webkit-tap-highlight-color:transparent; }
@@ -18,19 +21,21 @@
     button:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid var(--accent); outline-offset:5px; }
     main { width:min(100% - 40px,660px); margin:0 auto; padding:clamp(54px,12vh,128px) 0 60px; transition:padding .65s cubic-bezier(.2,.8,.2,1); }
     main.converted { padding-top:48px; }
-    h1 { margin:0 0 38px; max-width:520px; font-stretch:condensed; font-size:clamp(36px,7.5vw,58px); line-height:1.04; font-weight:500; letter-spacing:-2px; }
+    h1 { margin:0 0 38px; max-width:100%; font-size:clamp(32px,7vw,56px); line-height:1.12; font-weight:500; letter-spacing:-.055em; }
+    h1 span { display:block; }
+    h1 em { display:block; width:fit-content; padding-right:.15em; color:var(--accent); font-weight:700; font-style:italic; letter-spacing:-.06em; }
     h1::before { content:''; display:block; width:38px; height:5px; border-radius:10px; background:var(--accent); margin-bottom:27px; box-shadow:0 0 26px #e4f52924; }
     .amount-row { display:grid; grid-template-columns:minmax(0,1fr); align-items:end; gap:16px; }
     .converted .amount-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
-    label,.eyebrow { display:block; color:var(--muted); font-size:11px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; margin:0 0 12px; }
+    label,.eyebrow { display:block; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:1.3px; text-transform:uppercase; margin:0 0 12px; }
     .input-shell { position:relative; padding:0 20px; border:1px solid #ffffff20; border-radius:20px; background:linear-gradient(135deg,#ffffff09,#ffffff02); box-shadow:inset 0 1px #ffffff0b; }
     .input-shell:focus-within { border-color:#e4f56887; }
-    #amount { display:block; width:100%; min-width:0; height:100px; padding:12px 0; border:0; background:transparent; color:var(--text); outline:none; font-size:clamp(26px,6vw,42px); font-weight:400; letter-spacing:-1px; font-variant-numeric:tabular-nums; }
-    #amount::placeholder { color:#777d6c; font-size:clamp(20px,4vw,30px); letter-spacing:-.8px; }
+    #amount { display:block; width:100%; min-width:0; height:100px; padding:12px 0; border:0; background:transparent; color:var(--text); outline:none; font-size:clamp(26px,6vw,42px); font-weight:600; letter-spacing:-1px; font-variant-numeric:tabular-nums lining-nums; }
+    #amount::placeholder { color:#777d6c; font-size:clamp(20px,4vw,30px); font-weight:400; letter-spacing:-.8px; }
     #amount:focus::placeholder { color:transparent; }
     .result { display:flex; flex-direction:column; justify-content:space-between; min-width:0; aspect-ratio:1; max-height:260px; padding:23px; border:1px solid #f2ffa47a; border-radius:25px; color:#202511; background:radial-gradient(ellipse at 90% 0,#f7ffc1ba,transparent 65%),linear-gradient(125deg,#e4f568,#c6d94e); box-shadow:inset 0 1px #ffffffbd,0 12px 50px #b6cd3210; animation:appear .65s cubic-bezier(.2,.8,.2,1); }
     .result .eyebrow { color:#434c21; }
-    .result-value { font-size:clamp(27px,6vw,45px); letter-spacing:-1.5px; line-height:1.1; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+    .result-value { font-size:clamp(27px,6vw,45px); font-weight:800; letter-spacing:-1.5px; line-height:1.15; overflow-wrap:anywhere; font-variant-numeric:tabular-nums lining-nums; }
     .result-code { font-size:14px; font-weight:600; margin-top:7px; }
     .rate-note { margin-top:18px; font-size:12px; line-height:1.5; color:#414a22; overflow-wrap:anywhere; }
     .currencies { display:grid; grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr); gap:14px; align-items:end; margin-top:28px; }
@@ -50,26 +55,28 @@
     .currency-option small { display:block; margin-top:5px; color:var(--muted); line-height:1.4; }
     .arrow { display:grid; place-items:center; height:54px; color:var(--accent); }
     .arrow svg,.submit svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.5; }
-    .submit { display:flex; align-items:center; justify-content:space-between; width:100%; height:62px; margin-top:26px; padding:0 23px; border:1px solid #f4ffb044; border-radius:17px; color:#22280f; background:linear-gradient(120deg,#e8f878,#d7ec56); font-weight:700; font-size:14px; letter-spacing:1.1px; box-shadow:inset 0 1px #ffffff69,0 7px 24px #d9f04d09; transition:transform .2s,box-shadow .2s; }
-    .submit:hover { box-shadow:0 8px 32px #d9f04d1c; transform:translateY(-1px); }
+    .submit { display:flex; align-items:center; justify-content:space-between; width:100%; height:62px; margin-top:26px; padding:0 23px; border:1px solid #f4ffb044; border-radius:17px; color:#22280f; background:linear-gradient(90deg,#e8f878 0%,#d7ec56 50%,#e8f878 100%) 0 0 / 200% 100% repeat; font-weight:700; font-size:14px; letter-spacing:1.1px; box-shadow:inset 0 1px #ffffff69,0 7px 24px #d9f04d09; transition:transform .2s,box-shadow .2s; }
+    .submit:hover:not(:disabled) { box-shadow:0 8px 32px #d9f04d1c; transform:translateY(-1px); animation:gradient-right 1.1s ease-in-out; }
     .submit:active { transform:translateY(1px); }
     .message { margin:14px 0 0; font-size:14px; line-height:1.6; color:var(--muted); }
     .message:empty { display:none; }
     .message.error { color:var(--error); }
     .history { margin-top:38px; padding-top:28px; border-top:1px solid var(--line); animation:appear .65s ease-out; }
-    .history-heading { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:23px; }
-    h2 { font-weight:500; font-size:23px; letter-spacing:-.5px; margin:0; }
+    .history-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:23px; }
+    h2 { font-weight:700; font-size:clamp(19px,4vw,23px); line-height:1.25; letter-spacing:-.8px; margin:0; }
+    h2 em { font-weight:500; font-style:italic; }
     #pair-label { font-size:12px; color:var(--muted); text-align:right; }
     .date-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
     input[type=date] { width:100%; min-width:0; height:46px; padding:0 13px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:#ffffff04; font-size:14px; }
     .chart-card { padding:16px 10px 4px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(145deg,#ffffff05,#ffffff01); box-shadow:inset 0 1px #ffffff05; }
     #chart { display:block; width:100%; height:auto; overflow:visible; }
-    #chart text { font-family:Arial,sans-serif; fill:var(--muted); font-size:11px; }
+    #chart text { font-family:inherit; font-weight:500; font-variant-numeric:tabular-nums; fill:var(--muted); font-size:11px; }
     .extremes { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
     .extreme { padding:20px; border:1px solid var(--line); border-radius:19px; background:linear-gradient(120deg,#ffffff05,#ffffff01); min-width:0; }
     .extreme .eyebrow { margin-bottom:10px; }
-    .extreme strong { display:block; font-size:25px; font-weight:400; letter-spacing:-.6px; overflow-wrap:anywhere; }
+    .extreme strong { display:block; font-size:25px; font-weight:700; letter-spacing:-.9px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
     .extreme time { display:block; margin-top:8px; color:var(--muted); font-size:12px; }
+    @keyframes gradient-right { from { background-position:0 0; } to { background-position:-200% 0; } }
     @keyframes appear { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
     @media(min-width:900px) { main { width:660px; } }
     @media(max-width:420px) { main { width:calc(100% - 32px); } h1 { letter-spacing:-1.5px; } .result { padding:16px; } .currencies { gap:7px; grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr); } .currency-toggle { font-size:12px; padding-left:10px; padding-right:28px; } .select-shell::after { right:12px; } .input-shell { padding:0 14px; } .extreme { padding:16px; } .extreme strong { font-size:22px; } }
@@ -78,7 +85,7 @@
 </head>
 <body>
 <main id="app">
-  <h1>INTRODUCE UNA<br>CANTIDAD</h1>
+  <h1><span>Introduce una</span> <em>cantidad.</em></h1>
   <form id="converter" novalidate>
     <div class="amount-row">
       <div id="amount-group">
@@ -102,7 +109,7 @@
     <p id="conversion-message" class="message" role="status" aria-live="polite"></p>
   </form>
   <section id="history" class="history" aria-labelledby="history-title" hidden>
-    <div class="history-heading"><h2 id="history-title">Histórico de cambio</h2><span id="pair-label"></span></div>
+    <div class="history-heading"><h2 id="history-title">Histórico <em>de cambio</em></h2><span id="pair-label"></span></div>
     <div class="date-row">
       <div><label for="from">Fecha inicial</label><input id="from" type="date" aria-describedby="history-message"></div>
       <div><label for="to">Fecha final</label><input id="to" type="date" aria-describedby="history-message"></div>
