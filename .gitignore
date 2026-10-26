@@ -1,0 +1,18 @@
+# Credenciales y configuración local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencias y archivos generados
+node_modules/
+dist/
+coverage/
+*.log
+
+# Archivos locales del sistema y del editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

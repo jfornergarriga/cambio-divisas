@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#11120f">
+  <title>Cambio de divisas</title>
+  <style>
+    :root { color-scheme: dark; --bg:#11120f; --panel:#1c1e19; --line:#ffffff16; --text:#f2f3e9; --muted:#a2a69a; --accent:#e4f568; --error:#ffb5a7; }
+    * { box-sizing:border-box; }
+    [hidden] { display:none !important; }
+    body { margin:0; min-height:100svh; color:var(--text); background:radial-gradient(ellipse at 90% 0%,#363b242d,transparent 55%),var(--bg); font-family:'Arial Narrow','Aptos Narrow','Roboto Condensed',Arial,sans-serif; }
+    button,input,select { font:inherit; }
+    button,select,input[type=date] { cursor:pointer; }
+    button { -webkit-tap-highlight-color:transparent; }
+    button:disabled { cursor:wait; opacity:.55; }
+    button:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid var(--accent); outline-offset:5px; }
+    main { width:min(100% - 40px,660px); margin:0 auto; padding:clamp(54px,12vh,128px) 0 60px; transition:padding .65s cubic-bezier(.2,.8,.2,1); }
+    main.converted { padding-top:48px; }
+    h1 { margin:0 0 38px; max-width:520px; font-stretch:condensed; font-size:clamp(36px,7.5vw,58px); line-height:1.04; font-weight:500; letter-spacing:-2px; }
+    h1::before { content:''; display:block; width:38px; height:5px; border-radius:10px; background:var(--accent); margin-bottom:27px; box-shadow:0 0 26px #e4f52924; }
+    .amount-row { display:grid; grid-template-columns:minmax(0,1fr); align-items:end; gap:16px; }
+    .converted .amount-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    label,.eyebrow { display:block; color:var(--muted); font-size:11px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; margin:0 0 12px; }
+    .input-shell { position:relative; padding:0 20px; border:1px solid #ffffff20; border-radius:20px; background:linear-gradient(135deg,#ffffff09,#ffffff02); box-shadow:inset 0 1px #ffffff0b; }
+    .input-shell:focus-within { border-color:#e4f56887; }
+    #amount { display:block; width:100%; min-width:0; height:100px; padding:12px 0; border:0; background:transparent; color:var(--text); outline:none; font-size:clamp(26px,6vw,42px); font-weight:400; letter-spacing:-1px; font-variant-numeric:tabular-nums; }
+    #amount::placeholder { color:#777d6c; font-size:clamp(20px,4vw,30px); letter-spacing:-.8px; }
+    #amount:focus::placeholder { color:transparent; }
+    .result { display:flex; flex-direction:column; justify-content:space-between; min-width:0; aspect-ratio:1; max-height:260px; padding:23px; border:1px solid #f2ffa47a; border-radius:25px; color:#202511; background:radial-gradient(ellipse at 90% 0,#f7ffc1ba,transparent 65%),linear-gradient(125deg,#e4f568,#c6d94e); box-shadow:inset 0 1px #ffffffbd,0 12px 50px #b6cd3210; animation:appear .65s cubic-bezier(.2,.8,.2,1); }
+    .result .eyebrow { color:#434c21; }
+    .result-value { font-size:clamp(27px,6vw,45px); letter-spacing:-1.5px; line-height:1.1; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+    .result-code { font-size:14px; font-weight:600; margin-top:7px; }
+    .rate-note { margin-top:18px; font-size:12px; line-height:1.5; color:#414a22; overflow-wrap:anywhere; }
+    .currencies { display:grid; grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr); gap:14px; align-items:end; margin-top:28px; }
+    .currency { min-width:0; }
+    .select-shell { position:relative; }
+    .select-shell::after { content:''; position:absolute; right:18px; top:22px; width:7px; height:7px; border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted); transform:rotate(45deg); pointer-events:none; }
+    .currency-toggle { width:100%; height:54px; padding:0 36px 0 16px; border:1px solid var(--line); border-radius:15px; background:linear-gradient(140deg,#292c23,#1a1c17); color:var(--text); font-size:14px; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .currency-panel { position:absolute; top:calc(100% + 8px); left:0; width:min(340px,calc(100vw - 32px)); padding:12px; border:1px solid #ffffff25; border-radius:16px; background:#20231b; box-shadow:0 16px 48px #0009; z-index:10; }
+    .currency:last-child .currency-panel { left:auto; right:0; }
+    .search-label { margin-bottom:8px; font-size:10px; }
+    .currency-search { width:100%; min-width:0; padding:12px; border:1px solid #ffffff30; border-radius:10px; background:var(--bg); color:var(--text); font-size:16px; }
+    .search-status { margin:10px 2px; font-size:12px; color:var(--muted); }
+    .currency-options { max-height:min(280px,40svh); overflow-y:auto; overscroll-behavior:contain; }
+    .currency-option { display:block; width:100%; padding:12px 10px; border:0; border-radius:8px; background:transparent; color:var(--text); text-align:left; font-size:14px; }
+    .currency-option:hover,.currency-option:focus-visible { background:#e4f56818; }
+    .currency-option[aria-pressed=true] { color:var(--accent); background:#e4f56810; }
+    .currency-option small { display:block; margin-top:5px; color:var(--muted); line-height:1.4; }
+    .arrow { display:grid; place-items:center; height:54px; color:var(--accent); }
+    .arrow svg,.submit svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.5; }
+    .submit { display:flex; align-items:center; justify-content:space-between; width:100%; height:62px; margin-top:26px; padding:0 23px; border:1px solid #f4ffb044; border-radius:17px; color:#22280f; background:linear-gradient(120deg,#e8f878,#d7ec56); font-weight:700; font-size:14px; letter-spacing:1.1px; box-shadow:inset 0 1px #ffffff69,0 7px 24px #d9f04d09; transition:transform .2s,box-shadow .2s; }
+    .submit:hover { box-shadow:0 8px 32px #d9f04d1c; transform:translateY(-1px); }
+    .submit:active { transform:translateY(1px); }
+    .message { margin:14px 0 0; font-size:14px; line-height:1.6; color:var(--muted); }
+    .message:empty { display:none; }
+    .message.error { color:var(--error); }
+    .history { margin-top:38px; padding-top:28px; border-top:1px solid var(--line); animation:appear .65s ease-out; }
+    .history-heading { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:23px; }
+    h2 { font-weight:500; font-size:23px; letter-spacing:-.5px; margin:0; }
+    #pair-label { font-size:12px; color:var(--muted); text-align:right; }
+    .date-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+    input[type=date] { width:100%; min-width:0; height:46px; padding:0 13px; border:1px solid var(--line); border-radius:12px; color:var(--text); background:#ffffff04; font-size:14px; }
+    .chart-card { padding:16px 10px 4px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(145deg,#ffffff05,#ffffff01); box-shadow:inset 0 1px #ffffff05; }
+    #chart { display:block; width:100%; height:auto; overflow:visible; }
+    #chart text { font-family:Arial,sans-serif; fill:var(--muted); font-size:11px; }
+    .extremes { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+    .extreme { padding:20px; border:1px solid var(--line); border-radius:19px; background:linear-gradient(120deg,#ffffff05,#ffffff01); min-width:0; }
+    .extreme .eyebrow { margin-bottom:10px; }
+    .extreme strong { display:block; font-size:25px; font-weight:400; letter-spacing:-.6px; overflow-wrap:anywhere; }
+    .extreme time { display:block; margin-top:8px; color:var(--muted); font-size:12px; }
+    @keyframes appear { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
+    @media(min-width:900px) { main { width:660px; } }
+    @media(max-width:420px) { main { width:calc(100% - 32px); } h1 { letter-spacing:-1.5px; } .result { padding:16px; } .currencies { gap:7px; grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr); } .currency-toggle { font-size:12px; padding-left:10px; padding-right:28px; } .select-shell::after { right:12px; } .input-shell { padding:0 14px; } .extreme { padding:16px; } .extreme strong { font-size:22px; } }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+  </style>
+</head>
+<body>
+<main id="app">
+  <h1>INTRODUCE UNA<br>CANTIDAD</h1>
+  <form id="converter" novalidate>
+    <div class="amount-row">
+      <div id="amount-group">
+        <label for="amount">Cantidad base</label>
+        <div class="input-shell">
+          <input id="amount" type="text" inputmode="decimal" placeholder="Cantidad base" autocomplete="off" spellcheck="false" aria-describedby="conversion-message">
+        </div>
+      </div>
+      <output id="result" class="result" aria-live="polite" hidden>
+        <span class="eyebrow">Cantidad de cambio</span>
+        <div><div id="result-value" class="result-value"></div><div id="result-code" class="result-code"></div></div>
+        <div id="rate-note" class="rate-note"></div>
+      </output>
+    </div>
+    <div class="currencies">
+      <div class="currency"><label id="base-label" for="base-toggle">Divisa origen</label><div class="select-shell"><input id="base" type="hidden"><button id="base-toggle" class="currency-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="base-panel" aria-labelledby="base-label base-toggle">Selecciona divisa</button><div id="base-panel" class="currency-panel" role="dialog" aria-label="Buscar divisa" hidden><label for="base-search" class="search-label">Nombre, país o código</label><input id="base-search" class="currency-search" type="search" placeholder="Buscar divisa o país" autocomplete="off"><p id="base-status" class="search-status" role="status"></p><div id="base-options" class="currency-options"></div></div></div></div>
+      <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      <div class="currency"><label id="quote-label" for="quote-toggle">Divisa destino</label><div class="select-shell"><input id="quote" type="hidden"><button id="quote-toggle" class="currency-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="quote-panel" aria-labelledby="quote-label quote-toggle">Selecciona divisa</button><div id="quote-panel" class="currency-panel" role="dialog" aria-label="Buscar divisa" hidden><label for="quote-search" class="search-label">Nombre, país o código</label><input id="quote-search" class="currency-search" type="search" placeholder="Buscar divisa o país" autocomplete="off"><p id="quote-status" class="search-status" role="status"></p><div id="quote-options" class="currency-options"></div></div></div></div>
+    </div>
+    <button id="convert" class="submit" type="submit"><span id="submit-label">REALIZAR CAMBIO</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+    <p id="conversion-message" class="message" role="status" aria-live="polite"></p>
+  </form>
+  <section id="history" class="history" aria-labelledby="history-title" hidden>
+    <div class="history-heading"><h2 id="history-title">Histórico de cambio</h2><span id="pair-label"></span></div>
+    <div class="date-row">
+      <div><label for="from">Fecha inicial</label><input id="from" type="date" aria-describedby="history-message"></div>
+      <div><label for="to">Fecha final</label><input id="to" type="date" aria-describedby="history-message"></div>
+    </div>
+    <p id="history-message" class="message" role="status" aria-live="polite"></p>
+    <div id="chart-content" hidden>
+      <div class="chart-card"><svg id="chart" viewBox="0 0 620 260" role="img" aria-labelledby="chart-title chart-description"></svg></div>
+      <div class="extremes">
+        <div class="extreme"><span class="eyebrow">Valor mínimo</span><strong id="minimum"></strong><time id="minimum-date"></time></div>
+        <div class="extreme"><span class="eyebrow">Valor máximo</span><strong id="maximum"></strong><time id="maximum-date"></time></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+'use strict';
+(() => {
+  const API = 'https://api.frankfurter.dev/v2';
+  const $ = id => document.getElementById(id);
+  const amount = $('amount'), base = $('base'), quote = $('quote');
+  const from = $('from'), to = $('to');
+  const money = new Intl.NumberFormat('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2, useGrouping:true });
+  const rateFormat = new Intl.NumberFormat('es-ES', { maximumSignificantDigits:8 });
+  const dateFormat = new Intl.DateTimeFormat('es-ES', { day:'2-digit', month:'short', year:'numeric', timeZone:'UTC' });
+  const shortDate = new Intl.DateTimeFormat('es-ES', { month:'short', year:'2-digit', timeZone:'UTC' });
+  const state = { currencies:[], catalogue:null, pair:null, coverage:null, conversionId:0, historyId:0, conversionController:null, historyController:null, rangeSet:false };
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function validDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value+'T00:00:00Z')) && new Date(value+'T00:00:00Z').toISOString().slice(0,10) === value; }
+  function dateText(value) { return dateFormat.format(new Date(value+'T00:00:00Z')); }
+  function message(id, text='', error=false) { $(id).textContent=text; $(id).classList.toggle('error',error); }
+  function fail(text) { throw new Error(text); }
+  function networkMessage(error) { return error.name === 'AbortError' ? 'La conexión ha tardado demasiado. Vuelve a pulsar REALIZAR CAMBIO.' : error.message || 'No se ha podido completar la consulta.'; }
+
+  async function api(path, parentSignal) {
+    const controller = new AbortController();
+    let timedOut = false;
+    const cancel = () => controller.abort();
+    if (parentSignal?.aborted) controller.abort();
+    parentSignal?.addEventListener('abort',cancel,{once:true});
+    const timer = setTimeout(() => { timedOut=true; controller.abort(); },30000);
+    try {
+      const response = await fetch(API+path,{ signal:controller.signal, headers:{Accept:'application/json'} });
+      if (!response.ok) {
+        if (response.status===404) fail('No hay cotizaciones disponibles para estas divisas. Prueba con otro par.');
+        if (response.status===422 || response.status===400) fail('Frankfurter no puede consultar estas divisas o fechas. Revisa la selección.');
+        if (response.status===429) fail('Hay demasiadas consultas. Espera unos segundos y vuelve a intentarlo.');
+        fail('Frankfurter no está disponible en este momento. Vuelve a intentarlo.');
+      }
+      return await response.json();
+    } catch (error) {
+      if (timedOut) fail('La conexión ha tardado demasiado. Comprueba tu conexión y vuelve a intentarlo.');
+      if (error.name==='AbortError') throw error;
+      if (error instanceof TypeError) fail('No se ha podido conectar con Frankfurter. Comprueba tu conexión y vuelve a pulsar REALIZAR CAMBIO.');
+      if (error instanceof SyntaxError) fail('Frankfurter ha devuelto una respuesta no válida. Vuelve a intentarlo.');
+      throw error;
+    } finally { clearTimeout(timer); parentSignal?.removeEventListener('abort',cancel); }
+  }
+
+  // Países y territorios de cada moneda, incluidas las divisas compartidas.
+  const currencyRegions = {
+    AED:'AE',AFN:'AF',ALL:'AL',AMD:'AM',ANG:'CW SX',AOA:'AO',ARS:'AR',AUD:'AU CX CC KI NR NF TV',AWG:'AW',AZN:'AZ',
+    BAM:'BA',BBD:'BB',BDT:'BD',BGN:'BG',BHD:'BH',BIF:'BI',BMD:'BM',BND:'BN',BOB:'BO',BRL:'BR',BSD:'BS',BTN:'BT',BWP:'BW',BYN:'BY',BZD:'BZ',
+    CAD:'CA',CDF:'CD',CHF:'CH LI',CLP:'CL',CNY:'CN',COP:'CO',CRC:'CR',CUP:'CU',CVE:'CV',CZK:'CZ',
+    DJF:'DJ',DKK:'DK FO GL',DOP:'DO',DZD:'DZ',EGP:'EG',ERN:'ER',ETB:'ET',
+    EUR:'ES DE FR IT PT AT BE CY EE FI GR IE LV LT LU MT NL SK SI HR BG AD MC SM VA AX BL MF PM',
+    FJD:'FJ',FKP:'FK',GBP:'GB GG IM JE',GEL:'GE',GHS:'GH',GIP:'GI',GMD:'GM',GNF:'GN',GTQ:'GT',GYD:'GY',
+    HKD:'HK',HNL:'HN',HTG:'HT',HUF:'HU',IDR:'ID',ILS:'IL PS',INR:'IN BT',IQD:'IQ',IRR:'IR',ISK:'IS',
+    JMD:'JM',JOD:'JO PS',JPY:'JP',KES:'KE',KGS:'KG',KHR:'KH',KMF:'KM',KPW:'KP',KRW:'KR',KWD:'KW',KYD:'KY',KZT:'KZ',
+    LAK:'LA',LBP:'LB',LKR:'LK',LRD:'LR',LSL:'LS',LYD:'LY',MAD:'MA EH',MDL:'MD',MGA:'MG',MKD:'MK',MMK:'MM',MNT:'MN',MOP:'MO',MRU:'MR',MUR:'MU',MVR:'MV',MWK:'MW',MXN:'MX',MYR:'MY',MZN:'MZ',
+    NAD:'NA',NGN:'NG',NIO:'NI',NOK:'NO SJ BV',NPR:'NP',NZD:'NZ CK NU PN TK',OMR:'OM',PAB:'PA',PEN:'PE',PGK:'PG',PHP:'PH',PKR:'PK',PLN:'PL',PYG:'PY',
+    QAR:'QA',RON:'RO',RSD:'RS',RUB:'RU',RWF:'RW',SAR:'SA',SBD:'SB',SCR:'SC',SDG:'SD',SEK:'SE',SGD:'SG',SHP:'SH',SLE:'SL',SLL:'SL',SOS:'SO',SRD:'SR',SSP:'SS',STN:'ST',SYP:'SY',SZL:'SZ',
+    THB:'TH',TJS:'TJ',TMT:'TM',TND:'TN',TOP:'TO',TRY:'TR',TTD:'TT',TWD:'TW',TZS:'TZ',UAH:'UA',UGX:'UG',
+    USD:'US EC SV PA PR GU VI AS MP TL FM MH PW VG TC BQ IO',UYU:'UY',UZS:'UZ',VES:'VE',VND:'VN',VUV:'VU',WST:'WS',
+    XAF:'CM CF TD CG GQ GA',XCD:'AG DM GD KN LC VC AI MS',XOF:'BJ BF CI GW ML NE SN TG',XPF:'PF NC WF',YER:'YE',ZAR:'ZA LS NA SZ',ZMW:'ZM',ZWG:'ZW',ZWL:'ZW',XCG:'CW SX'
+  };
+  const countryAliases={USD:'EEUU EE.UU. USA Estados Unidos de America',GBP:'Reino Unido Gran Bretaña Inglaterra Escocia Gales Irlanda del Norte',CZK:'Republica Checa',TRY:'Turquia',KRW:'Corea del Sur',KPW:'Corea del Norte'};
+  function normalize(text) { return text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+  function closeCurrency(id,restoreFocus=false) {
+    $(id+'-panel').hidden=true;
+    $(id+'-toggle').setAttribute('aria-expanded','false');
+    if (restoreFocus) $(id+'-toggle').focus();
+  }
+  function renderCurrencies(id) {
+    const terms=normalize($(id+'-search').value).split(/\s+/).filter(Boolean);
+    const matches=state.currencies.filter(currency=>terms.every(term=>currency.search.includes(term)));
+    const list=$(id+'-options');
+    list.replaceChildren();
+    $(id+'-status').textContent=!state.currencies.length ? 'Cargando divisas…' : matches.length ? matches.length+' divisas disponibles' : 'No se encontraron divisas.';
+    for (const currency of matches) {
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='currency-option';
+      button.setAttribute('aria-pressed',String($(id).value===currency.iso_code));
+      button.textContent=currency.label;
+      if (currency.countries) {
+        const detail=document.createElement('small');
+        detail.textContent=currency.countries;
+        button.append(detail);
+      }
+      button.addEventListener('click',()=>{
+        $(id).value=currency.iso_code;
+        $(id+'-toggle').textContent=currency.label;
+        $(id).dispatchEvent(new Event('change',{bubbles:true}));
+        closeCurrency(id,true);
+      });
+      list.append(button);
+    }
+    list.scrollTop=0;
+  }
+  for (const id of ['base','quote']) {
+    const panel=$(id+'-panel'),search=$(id+'-search'),toggle=$(id+'-toggle');
+    toggle.addEventListener('click',()=>{
+      const open=panel.hidden;
+      for (const other of ['base','quote']) closeCurrency(other);
+      if (!open) return;
+      panel.hidden=false;
+      toggle.setAttribute('aria-expanded','true');
+      search.value='';
+      renderCurrencies(id);
+      search.focus();
+      loadCurrencies().catch(error=>{ $(id+'-status').textContent=networkMessage(error); });
+    });
+    search.addEventListener('input',()=>renderCurrencies(id));
+    panel.addEventListener('keydown',event=>{
+      if (event.key==='Escape') { event.preventDefault(); event.stopPropagation(); closeCurrency(id,true); return; }
+      const options=[...$(id+'-options').children];
+      const index=options.indexOf(document.activeElement);
+      if (event.key==='ArrowDown' || event.key==='ArrowUp') {
+        event.preventDefault();
+        const next=event.key==='ArrowDown' ? index+1 : index<0 ? options.length-1 : index-1;
+        if (next<0) search.focus();
+        else options[Math.min(next,options.length-1)]?.focus();
+      }
+      if (event.key==='Enter' && event.target===search) { event.preventDefault(); options[0]?.click(); }
+    });
+    toggle.parentElement.addEventListener('focusout',event=>{
+      if (!toggle.parentElement.contains(event.relatedTarget)) closeCurrency(id);
+    });
+  }
+  document.addEventListener('click',event=>{
+    for (const id of ['base','quote']) if (!$(id+'-toggle').parentElement.contains(event.target)) closeCurrency(id);
+  });
+
+  async function loadCurrencies() {
+    if (state.currencies.length) return;
+    if (state.catalogue) return state.catalogue;
+    state.catalogue = (async () => {
+      const data = await api('/currencies?scope=all');
+      if (!Array.isArray(data)) fail('No se ha podido leer la lista de divisas. Vuelve a intentarlo.');
+      const currencies = data.filter(c => /^[A-Z0-9]{3,8}$/.test(c.iso_code) && typeof c.name==='string').sort((a,b)=>a.iso_code.localeCompare(b.iso_code));
+      if (!currencies.length) fail('Frankfurter no ha devuelto divisas disponibles. Vuelve a intentarlo.');
+      const names = typeof Intl.DisplayNames==='function' ? new Intl.DisplayNames(['es'],{type:'currency',fallback:'code'}) : null;
+      const regions = typeof Intl.DisplayNames==='function' ? new Intl.DisplayNames(['es'],{type:'region'}) : null;
+      for (const currency of currencies) {
+        let name=currency.name;
+        try { const translated=names?.of(currency.iso_code); if (translated && translated!==currency.iso_code) name=translated; } catch (_) {}
+        currency.label=currency.iso_code+' · '+name;
+        currency.countries=(currencyRegions[currency.iso_code] || '').split(' ').filter(Boolean).map(code=>regions ? regions.of(code) : code).join(', ');
+        currency.search=normalize(currency.label+' '+currency.name+' '+currency.countries+' '+(countryAliases[currency.iso_code] || ''));
+      }
+      state.currencies=currencies;
+      for (const id of ['base','quote']) renderCurrencies(id);
+    })();
+    try { await state.catalogue; } finally { state.catalogue=null; }
+  }
+
+  function busy(value) {
+    $('convert').disabled=value;
+    $('submit-label').textContent=value ? 'CONSULTANDO…' : 'REALIZAR CAMBIO';
+    $('converter').setAttribute('aria-busy',String(value));
+  }
+  function invalidate() {
+    state.conversionId++;
+    state.historyId++;
+    state.conversionController?.abort();
+    state.historyController?.abort();
+    state.pair=null;
+    state.coverage=null;
+    $('result').hidden=true;
+    $('history').hidden=true;
+    $('chart-content').hidden=true;
+    busy(false);
+    message('conversion-message');
+    amount.removeAttribute('aria-invalid');
+  }
+  function number() {
+    const text = amount.value.trim().replace(',','.');
+    if (!/^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text)) fail('Introduce una cantidad válida.');
+    const value = Number(text);
+    if (!Number.isFinite(value)) fail('La cantidad es demasiado grande. Introduce un valor menor.');
+    return value;
+  }
+  amount.addEventListener('input',invalidate);
+  for (const select of [base,quote]) select.addEventListener('change',invalidate);
+
+  $('converter').addEventListener('submit',async event=>{
+    event.preventDefault();
+    if ($('convert').disabled) return;
+    let value;
+    try {
+      value=number();
+      if (value<0) fail('La cantidad final no puede ser negativa.');
+    } catch (error) { message('conversion-message',error.message,true); amount.setAttribute('aria-invalid','true'); return; }
+    invalidate();
+    const id=state.conversionId;
+    const controller=new AbortController(); state.conversionController=controller;
+    busy(true);
+    try {
+      await loadCurrencies();
+      if (id!==state.conversionId) return;
+      if (!base.value || !quote.value) fail('Selecciona la divisa de origen y la divisa destino.');
+      const pair={base:base.value,quote:quote.value};
+      message('conversion-message','Consultando el tipo de cambio…');
+      const data=pair.base===pair.quote ? {base:pair.base,quote:pair.quote,rate:1,date:today()} : await api(`/rate/${encodeURIComponent(pair.base)}/${encodeURIComponent(pair.quote)}`,controller.signal);
+      if (id!==state.conversionId) return;
+      if (!data || data.base!==pair.base || data.quote!==pair.quote || !Number.isFinite(data.rate) || data.rate<=0 || !validDate(data.date)) fail('Frankfurter ha devuelto una cotización no válida. Vuelve a intentarlo.');
+      const result=value*data.rate;
+      if (!Number.isFinite(result)) fail('El resultado es demasiado grande. Introduce una cantidad menor.');
+
+      $('result-value').textContent=money.format(result);
+      $('result-code').textContent=pair.quote;
+      $('rate-note').textContent=`1 ${pair.base} = ${rateFormat.format(data.rate)} ${pair.quote} · ${dateText(data.date)}`;
+      $('result').hidden=false;
+      $('app').classList.add('converted');
+      state.pair=pair;
+      $('history').hidden=false;
+      $('pair-label').textContent=`1 ${pair.base} → ${pair.quote}`;
+      message('conversion-message');
+      if (!state.rangeSet) { from.value=`${new Date().getFullYear()-10}-08-09`; to.value=today(); state.rangeSet=true; }
+      from.max=today(); to.max=today();
+      await loadHistory(true);
+    } catch (error) {
+      if (id===state.conversionId) message('conversion-message',networkMessage(error),true);
+    } finally { if (id===state.conversionId) busy(false); }
+  });
+
+  async function loadHistory(adjust=false) {
+    if (!state.pair) return;
+    state.historyController?.abort();
+    const controller=new AbortController(); state.historyController=controller;
+    const id=++state.historyId, pair={...state.pair};
+    $('chart-content').hidden=true;
+    $('history').setAttribute('aria-busy','true');
+    message('history-message','Cargando el histórico…');
+    try {
+      if (!validDate(from.value) || !validDate(to.value)) fail('Introduce una fecha inicial y una fecha final válidas.');
+      if (to.value>today()) fail('La fecha final no puede ser posterior a hoy.');
+      if (pair.base===pair.quote) {
+        // El cambio identidad no depende de cotizaciones históricas.
+        from.min=''; to.min='';
+      } else {
+        if (!state.coverage) {
+          const data=await api(`/coverage?${new URLSearchParams({base:pair.base,quotes:pair.quote})}`,controller.signal);
+          if (id!==state.historyId) return;
+          if (!data || !validDate(data.start_date) || !validDate(data.end_date)) fail('No hay cobertura histórica para este par de divisas. Selecciona otro par.');
+          state.coverage=data;
+        }
+        const minimum=state.coverage.start_date;
+        from.min=minimum; to.min=minimum;
+        if (from.value<minimum) {
+          if (adjust) from.value=minimum;
+          else fail(`La primera fecha disponible para este par es el ${dateText(minimum)}.`);
+        }
+      }
+      if (from.value>=to.value) fail('La fecha inicial debe ser anterior a la final. Cambia el rango de fechas.');
+      const start=from.value,end=to.value;
+      let rows;
+      if (pair.base===pair.quote) rows=[{date:start,rate:1},{date:end,rate:1}];
+      else {
+        const data=await api(`/rates?${new URLSearchParams({base:pair.base,quotes:pair.quote,from:start,to:end})}`,controller.signal);
+        if (!Array.isArray(data)) fail('Frankfurter ha devuelto un histórico no válido. Vuelve a intentarlo.');
+        rows=data.filter(r=>r.base===pair.base && r.quote===pair.quote && validDate(r.date) && r.date>=start && r.date<=end && Number.isFinite(r.rate) && r.rate>0).sort((a,b)=>a.date.localeCompare(b.date));
+      }
+      if (id!==state.historyId) return;
+      if (!rows.length) fail('No hay cotizaciones en este rango de fechas. Elige otro rango.');
+      drawChart(rows,pair,start,end);
+      message('history-message');
+      $('chart-content').hidden=false;
+    } catch (error) {
+      if (id===state.historyId) message('history-message',networkMessage(error),true);
+    } finally { if (id===state.historyId) $('history').setAttribute('aria-busy','false'); }
+  }
+
+  function svgElement(tag,attributes={},text) {
+    const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,String(value));
+    if (text!==undefined) node.textContent=text;
+    return node;
+  }
+  function drawChart(rows,pair,start,end) {
+    const svg=$('chart'); svg.replaceChildren();
+    let minimum=rows[0],maximum=rows[0];
+    for (const row of rows) { if (row.rate<minimum.rate) minimum=row; if (row.rate>maximum.rate) maximum=row; }
+    svg.append(svgElement('title',{id:'chart-title'},`Tipo de cambio ${pair.base} a ${pair.quote}`),svgElement('desc',{id:'chart-description'},`${rows.length} observaciones entre ${dateText(start)} y ${dateText(end)}. Mínimo ${rateFormat.format(minimum.rate)} el ${dateText(minimum.date)}. Máximo ${rateFormat.format(maximum.rate)} el ${dateText(maximum.date)}.`));
+    const defs=svgElement('defs');
+    const gradient=svgElement('linearGradient',{id:'chart-fill',x1:0,y1:0,x2:0,y2:1});
+    gradient.append(svgElement('stop',{offset:'0%','stop-color':'#e4f568','stop-opacity':'.15'}),svgElement('stop',{offset:'100%','stop-color':'#e4f568','stop-opacity':'0'}));
+    defs.append(gradient); svg.append(defs);
+    const left=90,right=598,top=18,bottom=213;
+    const spread=maximum.rate-minimum.rate;
+    const padding=spread===0 ? maximum.rate*.08 : spread*.12;
+    const low=minimum.rate-padding,high=maximum.rate+padding;
+    const x=date=>left+(Date.parse(date+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))/(Date.parse(end+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))*(right-left);
+    const y=rate=>bottom-(rate-low)/(high-low)*(bottom-top);
+    for (let i=0;i<4;i++) {
+      const lineY=top+(bottom-top)*i/3;
+      const value=high-(high-low)*i/3;
+      svg.append(svgElement('line',{x1:left,x2:right,y1:lineY,y2:lineY,stroke:'#ffffff10','stroke-dasharray':'3 5'}),svgElement('text',{x:left-12,y:lineY+4,'text-anchor':'end'},rateFormat.format(value)));
+    }
+    for (let i=0;i<3;i++) {
+      const stamp=Date.parse(start+'T00:00:00Z')+(Date.parse(end+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))*i/2;
+      svg.append(svgElement('text',{x:left+(right-left)*i/2,y:242,'text-anchor':i===0?'start':i===2?'end':'middle'},shortDate.format(new Date(stamp))));
+    }
+    const points=rows.map(row=>`${x(row.date).toFixed(2)},${y(row.rate).toFixed(2)}`);
+    svg.append(svgElement('path',{d:`M${x(rows[0].date)},${bottom} L${points.join(' L')} L${x(rows.at(-1).date)},${bottom} Z`,fill:'url(#chart-fill)'}));
+    svg.append(svgElement('polyline',{points:points.join(' '),fill:'none',stroke:'#e4f568','stroke-width':2,'stroke-linejoin':'round','stroke-linecap':'round','vector-effect':'non-scaling-stroke'}));
+    for (const row of minimum===maximum ? [minimum] : [minimum,maximum]) svg.append(svgElement('circle',{cx:x(row.date),cy:y(row.rate),r:4,fill:'#e4f568',stroke:'#1c1e19','stroke-width':2}));
+    for (const [name,row] of [['minimum',minimum],['maximum',maximum]]) {
+      $(name).textContent=`${rateFormat.format(row.rate)} ${pair.quote}`;
+      $(name+'-date').textContent=dateText(row.date);
+      $(name+'-date').dateTime=row.date;
+    }
+  }
+  for (const input of [from,to]) input.addEventListener('change',()=>loadHistory());
+  message('conversion-message','Cargando divisas…');
+  loadCurrencies().then(()=>message('conversion-message')).catch(error=>message('conversion-message',networkMessage(error),true));
+})();
+</script>
+</body>
+</html>
